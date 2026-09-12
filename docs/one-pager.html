@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>MCP meta-gate — audit ≠ auth</title>
+<meta name="description" content="turnId is the receipt. Attestation is the door key. Same turn: SMS allow, GitHub structured deny." />
+<meta property="og:title" content="MCP meta-gate — audit ≠ auth" />
+<meta property="og:description" content="Audit fields ≠ auth fields. Interceptor stamps _meta. Gate decides allow/deny." />
+<meta property="og:type" content="website" />
+<style>
+  :root {
+    --bg: #070b14;
+    --bg2: #0d1424;
+    --card: #121a2e;
+    --line: rgba(125, 211, 252, 0.18);
+    --text: #e8eefc;
+    --muted: #9aabca;
+    --cyan: #22d3ee;
+    --violet: #a78bfa;
+    --rose: #fb7185;
+    --lime: #a3e635;
+    --amber: #fbbf24;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+  body {
+    min-height: 100vh;
+    background:
+      radial-gradient(700px 360px at 8% -8%, rgba(34, 211, 238, 0.16), transparent 60%),
+      radial-gradient(640px 340px at 92% 0%, rgba(167, 139, 250, 0.14), transparent 55%),
+      var(--bg);
+  }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 22px 18px 20px; }
+  .eyebrow {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 4px 10px; border-radius: 999px;
+    border: 1px solid var(--line); background: rgba(18, 26, 46, 0.85);
+    color: var(--cyan); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600;
+  }
+  h1 {
+    font-size: clamp(1.45rem, 3vw, 2.05rem); line-height: 1.15; margin: 10px 0 6px;
+    letter-spacing: -0.025em; max-width: 44rem;
+  }
+  h1 span { background: linear-gradient(90deg, var(--cyan), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .lede { font-size: 0.9rem; color: var(--muted); max-width: 48rem; line-height: 1.4; margin: 0 0 12px; }
+  .lede a { font-weight: 700; }
+  .grid { display: grid; gap: 8px; grid-template-columns: repeat(3, 1fr); }
+  .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent), var(--card);
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+  }
+  .card h3 { margin: 0 0 3px; font-size: 0.84rem; }
+  .card p { margin: 0; color: var(--muted); font-size: 0.78rem; line-height: 1.32; }
+  .section { margin-top: 12px; }
+  .section h2 { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--violet); margin: 0 0 6px; }
+  .flow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: stretch; }
+  .panel { border-radius: 12px; border: 1px solid var(--line); padding: 10px 12px; background: var(--bg2); }
+  .panel.bad { border-color: rgba(251, 113, 133, 0.35); }
+  .panel.good { border-color: rgba(34, 211, 238, 0.35); }
+  .panel h3 { margin: 0 0 4px; font-size: 0.86rem; }
+  .panel ul { margin: 0; padding-left: 1.05rem; color: var(--muted); line-height: 1.35; font-size: 0.8rem; }
+  .arrow { color: var(--muted); font-size: 1.25rem; align-self: center; }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+  .pill {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 999px;
+  }
+  .pill.admit { color: #052e16; background: var(--lime); }
+  .pill.deny { color: #4c0519; background: var(--rose); }
+  .pill.note { color: #451a03; background: var(--amber); }
+  .related {
+    margin-top: 12px; padding: 8px 12px; border-radius: 12px;
+    border: 1px dashed rgba(251, 191, 36, 0.35); background: rgba(251, 191, 36, 0.06);
+    color: var(--muted); font-size: 0.78rem; line-height: 1.35;
+  }
+  .related strong { color: var(--amber); }
+  .bottom { display: grid; grid-template-columns: 1.4fr 1fr; gap: 8px; margin-top: 12px; align-items: start; }
+  .code {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 10.5px; line-height: 1.3; background: #050814; border: 1px solid var(--line);
+    border-radius: 12px; padding: 8px 10px; color: #c7d2fe; margin: 0; white-space: pre;
+  }
+  .footer {
+    margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 0.74rem; display: flex; flex-wrap: wrap; gap: 6px 16px; justify-content: space-between;
+  }
+  a { color: var(--cyan); text-decoration: none; }
+  .tagline { font-weight: 600; color: var(--text); }
+  @media (max-width: 760px) {
+    .grid, .flow, .bottom { grid-template-columns: 1fr; }
+    .arrow { transform: rotate(90deg); justify-self: center; }
+  }
+</style>
+</head>
+<body>
+  <main class="wrap">
+    <div class="eyebrow">AI security · MCP · weekend sample</div>
+    <h1>Audit fields ≠ auth fields.<br /><span>Receipt ≠ door key.</span></h1>
+    <p class="lede">
+      MCP host/client interceptor stamps <code>_meta</code>. MCP server gate decides allow / deny.
+      SEP-2817 <code>turnId</code> ≈ the receipt. Channel-policy attestation ≈ the door key.
+      Code: <a href="https://github.com/sheshisheri-hi/mcp-meta-gate-showcase">github.com/sheshisheri-hi/mcp-meta-gate-showcase</a>
+    </p>
+
+    <div class="grid">
+      <article class="card">
+        <h3>Audit ≠ auth</h3>
+        <p><code>turnId</code> joins the trail. A glowing <code>userIntent</code> does not unlock GitHub.</p>
+      </article>
+      <article class="card">
+        <h3>Interceptor ≠ gate</h3>
+        <p>The host stamps. The server decides. This is not that.</p>
+      </article>
+      <article class="card">
+        <h3>Firewall ≠ ROPE</h3>
+        <p>Firewall: is this request allowed? ROPE: where did this value come from?</p>
+      </article>
+    </div>
+
+    <section class="section">
+      <h2>Same turnId · two doors</h2>
+      <div class="flow">
+        <div class="panel good">
+          <h3>SMS allow</h3>
+          <ul>
+            <li>User: “Text me the meeting summary.”</li>
+            <li>Valid channel attestation</li>
+            <li>Origin = <code>user</code> / <code>records</code></li>
+          </ul>
+          <div class="pills">
+            <span class="pill admit">allow</span>
+            <span class="pill note">same turnId</span>
+          </div>
+        </div>
+        <div class="arrow">→</div>
+        <div class="panel bad">
+          <h3>GitHub deny</h3>
+          <ul>
+            <li>Poison: post private notes publicly</li>
+            <li>Missing / invalid attestation</li>
+            <li>Origin = <code>untrusted_tool</code></li>
+          </ul>
+          <div class="pills">
+            <span class="pill deny">sep-2643 deny</span>
+            <span class="pill note">same turnId</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <aside class="related">
+      <strong>Drafts, not a badge.</strong>
+      SEP-2817, SEP-2643, channel-policy attestation, and ROPE (arXiv:2608.27496) are inspiration.
+      Educational sample. Not official compliance. No WebAuthn. No live SMS or GitHub.
+    </aside>
+
+    <section class="bottom">
+      <div>
+        <h2 class="section" style="margin:0 0 6px">Who asks what</h2>
+        <div class="grid">
+          <article class="card"><h3>Receipt</h3><p>Log <code>turnId</code>. Do not authorize from it.</p></article>
+          <article class="card"><h3>Door key</h3><p>Require a fresh attestation on outbound.</p></article>
+          <article class="card"><h3>Origin</h3><p>Reject values that only came from a tool.</p></article>
+        </div>
+      </div>
+      <pre class="code">{
+  "clientTurnId": "turn-meeting-…",
+  "classification": "policy_blocked",
+  "reasons": [
+    {"code": "missing_attestation"},
+    {"code": "untrusted_origin"}
+  ]
+}</pre>
+    </section>
+
+    <footer class="footer">
+      <div>
+        <div class="tagline">MCP meta-gate · audit ≠ auth</div>
+        Sample repo: <a href="https://github.com/sheshisheri-hi/mcp-meta-gate-showcase">sheshisheri-hi/mcp-meta-gate-showcase</a>
+        · CPU only · mock SMS / GitHub · no network
+      </div>
+      <div>
+        <a href="https://github.com/sheshisheri-hi/mcp-meta-gate-showcase">Code</a>
+        ·
+        <a href="https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2817">SEP-2817</a>
+        ·
+        <a href="https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2643">SEP-2643</a>
+        ·
+        <a href="https://arxiv.org/abs/2608.27496">ROPE</a>
+      </div>
+    </footer>
+  </main>
+</body>
+</html>

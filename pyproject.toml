@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcp-meta-gate"
+version = "0.1.0"
+description = "Educational MCP sample: request _meta carries audit telemetry and enforcement proofs, but the MCP server never treats audit fields as authorization."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Sheshi Sheri" }]
+keywords = ["mcp", "security", "sep-2817", "sep-2643", "rope", "attestation"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Security",
+]
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5"]
+
+[project.urls]
+Repository = "https://github.com/sheshisheri-hi/mcp-meta-gate-showcase"
+SEP2817 = "https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2817"
+SEP2643 = "https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2643"
+ROPE = "https://arxiv.org/abs/2608.27496"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["src"]
