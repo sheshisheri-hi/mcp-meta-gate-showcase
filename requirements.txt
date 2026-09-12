@@ -1,0 +1,2 @@
+# Runtime is stdlib only (Python 3.11+). Pin pytest so local and CI match.
+pytest==8.3.5
