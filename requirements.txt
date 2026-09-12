@@ -1,0 +1,2 @@
+# Runtime is stdlib-only (hmac, json, dataclasses). Pin pytest so local and CI match.
+pytest==8.3.5
